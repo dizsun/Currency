@@ -13,6 +13,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -48,6 +49,12 @@ public class MainActivity extends AppCompatActivity {
         mCalcButton = (Button) findViewById(R.id.btn_calc);
         mForSpinner = (Spinner) findViewById(R.id.spn_for);
         mHomSpinner = (Spinner) findViewById(R.id.spn_hom);
+
+        //List的适配器
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this,R.layout.spinner_closed,mCurrenices);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mHomSpinner.setAdapter(arrayAdapter);
+        mForSpinner.setAdapter(arrayAdapter);
     }
 
     public boolean isOnline(){
