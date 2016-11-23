@@ -8,8 +8,22 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
+    //定义layout上的view
+    private Button mCalcButton;
+    private TextView mConvertedTextView;
+    private EditText mAmountEditText;
+    private Spinner mForSpinner, mHomSpinner;
+
+    private String[] mCurrenices;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -18,6 +32,17 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //将货币ArrayList解压并转化为数组
+        ArrayList<String> arrayList = (ArrayList<String>)getIntent().getSerializableExtra(SplashActivity.NAME);
+        Collections.sort(arrayList);
+        mCurrenices=arrayList.toArray(new String[arrayList.size()]);
+
+        //空间初始化
+        mConvertedTextView = (TextView) findViewById(R.id.txt_converted);
+        mAmountEditText = (EditText) findViewById(R.id.edt_amount);
+        mCalcButton = (Button) findViewById(R.id.btn_calc);
+        mForSpinner = (Spinner) findViewById(R.id.spn_for);
+        mHomSpinner = (Spinner) findViewById(R.id.spn_hom);
     }
 
     @Override
