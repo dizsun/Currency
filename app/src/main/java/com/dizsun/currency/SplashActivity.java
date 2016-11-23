@@ -16,9 +16,10 @@ import java.util.Iterator;
 
 public class SplashActivity extends Activity {
     //获取货币汇率的api网址
-    public static final String URL_CODES="http://openexchangerates.org/api/currencies.json";
+    public static final String URL_CODES = "http://openexchangerates.org/api/currencies.json";
     public static final String NAME = "key_arraylist";
     private ArrayList<String> mCurrencies;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -27,7 +28,7 @@ public class SplashActivity extends Activity {
         new FetchCodesTask().execute(URL_CODES);
     }
 
-    private class FetchCodesTask extends AsyncTask<String,Void,JSONObject>{
+    private class FetchCodesTask extends AsyncTask<String, Void, JSONObject> {
 
         @Override
         protected JSONObject doInBackground(String... strings) {
@@ -37,24 +38,23 @@ public class SplashActivity extends Activity {
         @Override
         protected void onPostExecute(JSONObject jsonObject) {
             super.onPostExecute(jsonObject);
-            try{
-                if(jsonObject==null){
+            try {
+                if (jsonObject == null) {
                     throw new JSONException("没有可用的数据！");
                 }
                 Iterator iterator = jsonObject.keys();
-                String key="";
-                mCurrencies=new ArrayList<String>();
-                while (iterator.hasNext()){
-                    key=(String)iterator.next();
-                    mCurrencies.add(key+"|"+jsonObject.getString(key));
+                String key = "";
+                mCurrencies = new ArrayList<String>();
+                while (iterator.hasNext()) {
+                    key = (String) iterator.next();
+                    mCurrencies.add(key + "|" + jsonObject.getString(key));
                 }
                 Intent mainIntent = new Intent(SplashActivity.this, MainActivity.class);
-                mainIntent.putExtra(NAME,mCurrencies);
+                mainIntent.putExtra(NAME, mCurrencies);
                 startActivity(mainIntent);
                 finish();
-            }
-            catch (JSONException e){
-                Toast.makeText(SplashActivity.this,"发生了一个JSON异常:"+e.getMessage(),Toast.LENGTH_LONG).show();
+            } catch (JSONException e) {
+                Toast.makeText(SplashActivity.this, "发生了一个JSON异常:" + e.getMessage(), Toast.LENGTH_LONG).show();
                 e.printStackTrace();
                 finish();
             }
