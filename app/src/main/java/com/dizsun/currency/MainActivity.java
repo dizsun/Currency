@@ -1,10 +1,14 @@
 package com.dizsun.currency;
 
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -17,9 +21,17 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Properties;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
     //定义layout上的view
@@ -31,6 +43,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private String[] mCurrencies;
     public static final String FOR = "FOR_CURRENCY";
     public static final String HOM = "HOM_CURRENCY";
+    private String mKey;
+    public static final String RATES = "rates";
+    public static final String URL_BASE = "http://openexchangerates.org/api/latest.json?app_id=";
+    public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00000");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,16 +79,25 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mForSpinner.setOnItemSelectedListener(this);
 
         //设置默认偏好
-        if(savedInstanceState==null&&
-                (PrefsMgr.getString(this,FOR)==null&&PrefsMgr.getString(this,HOM)==null)){
-            mForSpinner.setSelection(findPositionGivenCode("USD",mCurrencies));
-            mHomSpinner.setSelection(findPositionGivenCode("CNY",mCurrencies));
-            PrefsMgr.setString(this,FOR,"USD");
-            PrefsMgr.setString(this,HOM,"CNY");
-        }else {
-            mForSpinner.setSelection(findPositionGivenCode(PrefsMgr.getString(this,FOR),mCurrencies));
-            mForSpinner.setSelection(findPositionGivenCode(PrefsMgr.getString(this,HOM),mCurrencies));
+        if (savedInstanceState == null &&
+                (PrefsMgr.getString(this, FOR) == null && PrefsMgr.getString(this, HOM) == null)) {
+            mForSpinner.setSelection(findPositionGivenCode("USD", mCurrencies));
+            mHomSpinner.setSelection(findPositionGivenCode("CNY", mCurrencies));
+            PrefsMgr.setString(this, FOR, "USD");
+            PrefsMgr.setString(this, HOM, "CNY");
+        } else {
+            mForSpinner.setSelection(findPositionGivenCode(PrefsMgr.getString(this, FOR), mCurrencies));
+            mForSpinner.setSelection(findPositionGivenCode(PrefsMgr.getString(this, HOM), mCurrencies));
         }
+
+        //给按钮绑定监听器
+        mCalcButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new CurrencyConverterTask().execute(URL_BASE+mKey);
+            }
+        });
+        mKey = getKey("open_key");
     }
 
     public boolean isOnline() {
@@ -96,8 +121,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mForSpinner.setSelection(nHom);
         mHomSpinner.setSelection(nFor);
         mConvertedTextView.setText("");
-        PrefsMgr.setString(this,FOR,extractCodeFromCurrency((String)mForSpinner.getSelectedItem()));
-        PrefsMgr.setString(this,HOM,extractCodeFromCurrency((String)mForSpinner.getSelectedItem()));
+        PrefsMgr.setString(this, FOR, extractCodeFromCurrency((String) mForSpinner.getSelectedItem()));
+        PrefsMgr.setString(this, HOM, extractCodeFromCurrency((String) mForSpinner.getSelectedItem()));
     }
 
     /**
@@ -124,6 +149,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
      */
     private String extractCodeFromCurrency(String currency) {
         return (currency).substring(0, 3);
+    }
+
+    private String getKey(String keyName) {
+        AssetManager assetManager = this.getResources().getAssets();
+        Properties properties = new Properties();
+        try {
+            InputStream inputStream = assetManager.open("keys.properties");
+            properties.load(inputStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return properties.getProperty(keyName);
     }
 
     @Override
@@ -162,10 +199,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         switch (adapterView.getId()) {
             case R.id.spn_for:
-                PrefsMgr.setString(this,FOR,extractCodeFromCurrency((String)mForSpinner.getSelectedItem()));
+                PrefsMgr.setString(this, FOR, extractCodeFromCurrency((String) mForSpinner.getSelectedItem()));
                 break;
             case R.id.spn_hom:
-                PrefsMgr.setString(this,HOM,extractCodeFromCurrency((String)mForSpinner.getSelectedItem()));
+                PrefsMgr.setString(this, HOM, extractCodeFromCurrency((String) mForSpinner.getSelectedItem()));
                 break;
             default:
                 break;
@@ -176,5 +213,57 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
 
+    }
+
+    private class CurrencyConverterTask extends AsyncTask<String, Void, JSONObject> {
+        private ProgressDialog progressDialog;
+
+        @Override
+        protected void onPreExecute() {
+            progressDialog = new ProgressDialog(MainActivity.this);
+            progressDialog.setTitle("正在计算结果...");
+            progressDialog.setMessage("请稍等...");
+            progressDialog.setCancelable(true);
+            progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    CurrencyConverterTask.this.cancel(true);
+                    progressDialog.dismiss();
+                }
+            });
+            progressDialog.show();
+        }
+
+        @Override
+        protected JSONObject doInBackground(String... params) {
+            return new JSONParser().getJSONFromUrl(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(JSONObject jsonObject) {
+            double dCalculated = 0.0;
+            String strForCode = extractCodeFromCurrency(mCurrencies[mForSpinner.getSelectedItemPosition()]);
+            String strHomCode = extractCodeFromCurrency(mCurrencies[mHomSpinner.getSelectedItemPosition()]);
+            String strAmount = mAmountEditText.getText().toString();
+            try {
+                if (jsonObject == null) {
+                    throw new JSONException("无法获取数据");
+                }
+                JSONObject jsonRates = jsonObject.getJSONObject(RATES);
+                if (strHomCode.equalsIgnoreCase("CNY")) {
+                    dCalculated = Double.parseDouble(strAmount) / jsonRates.getDouble(strForCode);
+                } else if (strForCode.equalsIgnoreCase("CNY")) {
+                    dCalculated = Double.parseDouble(strAmount) / jsonRates.getDouble(strHomCode);
+                }else {
+                    dCalculated=Double.parseDouble(strAmount)*jsonRates.getDouble(strHomCode)/jsonRates.getDouble(strForCode);
+                }
+            }catch (JSONException e){
+                Toast.makeText(MainActivity.this,"出现一个JSON异常:"+e.getMessage(),Toast.LENGTH_LONG).show();
+                mConvertedTextView.setText("");
+                e.printStackTrace();
+            }
+            mConvertedTextView.setText(DECIMAL_FORMAT.format(dCalculated)+" "+strHomCode);
+            progressDialog.dismiss();
+        }
     }
 }
