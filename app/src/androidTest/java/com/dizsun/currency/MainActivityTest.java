@@ -32,7 +32,7 @@ public class MainActivityTest extends ActivityInstrumentationTestCase2<MainActiv
     protected void setUp() throws Exception {
         super.setUp();
 
-        ArrayList<String> bogusCurrencies=new ArrayList<String>();
+        ArrayList<String> bogusCurrencies= new ArrayList<>();
         bogusCurrencies.add("USD|United States Dollar");
         bogusCurrencies.add("EUR|Euro");
         Intent intent=new Intent();

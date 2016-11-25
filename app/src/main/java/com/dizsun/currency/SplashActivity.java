@@ -11,7 +11,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Currency;
 import java.util.Iterator;
 
 public class SplashActivity extends Activity {
@@ -44,7 +43,7 @@ public class SplashActivity extends Activity {
                 }
                 Iterator iterator = jsonObject.keys();
                 String key = "";
-                mCurrencies = new ArrayList<String>();
+                mCurrencies = new ArrayList<>();
                 while (iterator.hasNext()) {
                     key = (String) iterator.next();
                     mCurrencies.add(key + "|" + jsonObject.getString(key));

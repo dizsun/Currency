@@ -10,10 +10,8 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -81,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         //List的适配器
         ArrayAdapter<String> arrayAdapter =
-                new ArrayAdapter<String>(this, R.layout.spinner_closed, mCurrencies);
+                new ArrayAdapter<>(this, R.layout.spinner_closed, mCurrencies);
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mHomSpinner.setAdapter(arrayAdapter);
         mForSpinner.setAdapter(arrayAdapter);
