@@ -10,8 +10,10 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -81,10 +83,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         //设置默认偏好
         if (savedInstanceState == null &&
                 (PrefsMgr.getString(this, FOR) == null && PrefsMgr.getString(this, HOM) == null)) {
-            mForSpinner.setSelection(findPositionGivenCode("USD", mCurrencies));
-            mHomSpinner.setSelection(findPositionGivenCode("CNY", mCurrencies));
-            PrefsMgr.setString(this, FOR, "USD");
-            PrefsMgr.setString(this, HOM, "CNY");
+            mForSpinner.setSelection(findPositionGivenCode("CNY", mCurrencies));
+            mHomSpinner.setSelection(findPositionGivenCode("USD", mCurrencies));
+            PrefsMgr.setString(this, FOR, "CNY");
+            PrefsMgr.setString(this, HOM, "USD");
         } else {
             mForSpinner.setSelection(findPositionGivenCode(PrefsMgr.getString(this, FOR), mCurrencies));
             mForSpinner.setSelection(findPositionGivenCode(PrefsMgr.getString(this, HOM), mCurrencies));
@@ -250,13 +252,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     throw new JSONException("无法获取数据");
                 }
                 JSONObject jsonRates = jsonObject.getJSONObject(RATES);
-                if (strHomCode.equalsIgnoreCase("CNY")) {
-                    dCalculated = Double.parseDouble(strAmount) / jsonRates.getDouble(strForCode);
-                } else if (strForCode.equalsIgnoreCase("CNY")) {
-                    dCalculated = Double.parseDouble(strAmount) / jsonRates.getDouble(strHomCode);
-                }else {
-                    dCalculated=Double.parseDouble(strAmount)*jsonRates.getDouble(strHomCode)/jsonRates.getDouble(strForCode);
-                }
+                dCalculated=Double.parseDouble(strAmount)*jsonRates.getDouble(strHomCode)/jsonRates.getDouble(strForCode);
             }catch (JSONException e){
                 Toast.makeText(MainActivity.this,"出现一个JSON异常:"+e.getMessage(),Toast.LENGTH_LONG).show();
                 mConvertedTextView.setText("");
