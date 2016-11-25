@@ -50,6 +50,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public static final String URL_BASE = "http://openexchangerates.org/api/latest.json?app_id=";
     public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.00000");
 
+    private CurrencyTaskCallback mCurrencyTaskCallback;
+    public static interface CurrencyTaskCallback{
+        void executionDone();
+    }
+
+    public void setCurrencyTaskCallback(CurrencyTaskCallback mCurrencyTaskCallback) {
+        this.mCurrencyTaskCallback = mCurrencyTaskCallback;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,10 +105,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mCalcButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new CurrencyConverterTask().execute(URL_BASE+mKey);
+                if(isNumeric(String.valueOf(mAmountEditText.getText()))) {
+                    new CurrencyConverterTask().execute(URL_BASE+mKey);
+                }else {
+                    Toast.makeText(MainActivity.this,"请输入一个合法的数字！",Toast.LENGTH_LONG).show();
+                }
             }
         });
         mKey = getKey("open_key");
+    }
+
+
+    public static boolean isNumeric(String str){
+        try{
+            double dub=Double.parseDouble(str);
+        }catch (NumberFormatException e){
+            return false;
+        }
+        return true;
     }
 
     public boolean isOnline() {
@@ -260,6 +283,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
             mConvertedTextView.setText(DECIMAL_FORMAT.format(dCalculated)+" "+strHomCode);
             progressDialog.dismiss();
+            if(mCurrencyTaskCallback!=null){
+                mCurrencyTaskCallback.executionDone();
+            }
         }
     }
 }
